@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:fall_assist/util/size_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -53,148 +51,48 @@ class _FallHistoryState extends State<FallHistory> {
   }
 }
 
-class FallStream extends StatelessWidget {
+class FallStream extends StatefulWidget {
   var dbRef;
-  FallStream({this.dbRef});
-  // void _showDialog(
-  //     String a,
-  //     String b,
-  //     BuildContext context,
-  //     ) {
-  //   // flutter defined function
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (BuildContext context) {
+  FallStream({Key key, this.dbRef}) : super(key: key);
+  @override
+  _FallStreamState createState() => _FallStreamState();
+}
 
-  //       // return object of type Dialog
-  //       return AlertDialog(
-  //         contentPadding: EdgeInsets.fromLTRB(SizeConfig.safeBlockHorizontal*6.2,SizeConfig.safeBlockHorizontal*2,
-  //             SizeConfig.safeBlockHorizontal*4,SizeConfig.safeBlockHorizontal*2),
-  //         shape: RoundedRectangleBorder(
-
-  //           borderRadius: BorderRadius.circular(10),
-  //         ),
-  //         title: new Text(a,style: GoogleFonts.montserrat(
-  //             fontWeight: FontWeight.w500, color: Colors.black, fontSize:SizeConfig.safeBlockHorizontal*5),),
-  //         content: new Text(b,style: GoogleFonts.montserrat(
-  //           fontWeight: FontWeight.normal,
-  //           fontSize:SizeConfig.safeBlockHorizontal*4,
-  //           color: Colors.black,
-  //         ),),
-  //         actions: <Widget>[
-  //           // usually buttons at the bottom of the dialog
-  //           new FlatButton(
-  //             child: new Text(" OK",style: TextStyle(
-  //                 fontSize: SizeConfig.safeBlockHorizontal*3.5
-  //             ),),
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
+class _FallStreamState extends State<FallStream> {
+  List<FallTile> data;
   @override
   Widget build(BuildContext context) {
-    // void _showDialog(
-    //     String a,
-    //     String b,
-    //     BuildContext context,
-    //     ) {
-    //   // flutter defined function
-    //   showDialog(
-    //     context: context,
-    //     barrierDismissible: false,
-    //     builder: (BuildContext context) {
-
-    //       // return object of type Dialog
-    //       return AlertDialog(
-    //         contentPadding: EdgeInsets.fromLTRB(SizeConfig.safeBlockHorizontal*6.2,SizeConfig.safeBlockHorizontal*2,
-    //             SizeConfig.safeBlockHorizontal*4,SizeConfig.safeBlockHorizontal*2),
-    //         shape: RoundedRectangleBorder(
-
-    //           borderRadius: BorderRadius.circular(10),
-    //         ),
-    //         title: new Text(a,style: GoogleFonts.montserrat(
-    //             fontWeight: FontWeight.w500, color: Colors.black, fontSize:SizeConfig.safeBlockHorizontal*5),),
-    //         content: new Text(b,style: GoogleFonts.montserrat(
-    //           fontWeight: FontWeight.normal,
-    //           fontSize:SizeConfig.safeBlockHorizontal*4,
-    //           color: Colors.black,
-    //         ),),
-    //         actions: <Widget>[
-    //           // usually buttons at the bottom of the dialog
-    //           new FlatButton(
-    //             child: new Text(" OK",style: TextStyle(
-    //                 fontSize: SizeConfig.safeBlockHorizontal*3.5
-    //             ),),
-    //             onPressed: () {
-    //               Navigator.of(context).pop();
-    //             },
-    //           ),
-    //         ],
-    //       );
-    //     },
-    //   );
-    // }
-
-    // Future<bool>  getConnectivityStatus()async{
-    //   try {
-    //     final result = await InternetAddress.lookup('google.com');
-    //     if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-
-    //     }
-    //   } on SocketException catch (_) {
-    //     _showDialog("No Internet!", "Please check your internet connection.",context);
-    //     return false;
-    //   }
-    // }
-
     return StreamBuilder<dynamic>(
-      stream: dbRef.onValue,
+      stream: widget.dbRef.onValue,
       builder: (context, snap) {
         if (snap.hasData &&
             !snap.hasError &&
             snap.data.snapshot.value != null) {
           DataSnapshot snapshot = snap.data.snapshot;
-          print(snapshot.value);
-          print(snapshot.value.runtimeType);
-          List item = [];
-          List<dynamic> _list = [];
-          print('here1');
+          //print(snapshot.value);
+          //print(snapshot.value.runtimeType);
+          //print('here1');
           Map<dynamic, dynamic> map = snapshot.value;
-          print('here2');
-          print(map);
+          //print('here2');
+          //print(map);
+          data = map.entries
+              .map((entry) => FallTile(
+                    angle: entry.value["angle"],
+                    fall: entry.value["fall"],
+                    lat: entry.value["latitude"],
+                    long: entry.value["longitude"],
+                    timst: entry.value["timestamp"],
+                    isExpanded: false,
+                  ))
+              .toList();
 
-          //Map<String, dynamic> map = json.decode(snapshot.value);
-//it gives all the documents in this list.
-
-//Now we're just checking if document is not null then add it to another list called "item".
-//I faced this problem it works fine without null check until you remove a document and then your stream reads data including the removed one with a null value(if you have some better approach let me know).
-          _list.forEach((f) {
-            if (f != null) {
-              item.add(f);
-            }
-          });
           return snap.data.snapshot.value == null
-//return sizedbox if there's nothing in database.
               ? SizedBox()
-//otherwise return a list of widgets.
-              : ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: item.length,
-                  itemBuilder: (context, index) {
-                    return FallTile(
-                        angle: item[index]['angle'],
-                        fall: item[index]['fall'],
-                        lat: item[index]['latitude'],
-                        long: item[index]['longitude'],
-                        timst: item[index]['timestamp']);
-                  },
+              : SingleChildScrollView(
+                  child: Container(
+                    //padding: EdgeInsets.only(top: 80),
+                    child: _buildPanel(),
+                  ),
                 );
         } else {
           return Center(child: CircularProgressIndicator());
@@ -202,20 +100,41 @@ class FallStream extends StatelessWidget {
       },
     );
   }
+
+  Widget _buildPanel() {
+    return ExpansionPanelList(
+      expansionCallback: (int index, bool isExpanded) {
+        setState(() {
+          data[index].isExpanded = !isExpanded;
+        });
+      },
+      children: data.map<ExpansionPanel>((FallTile item) {
+        return ExpansionPanel(
+          headerBuilder: (BuildContext context, bool isExpanded) {
+            return ListTile(
+              title: Text("Fall" + " " + "Occured" + " " + "at " + item.timst),
+            );
+          },
+          body: ListTile(
+            title: Text(item.timst),
+          ),
+          isExpanded: item.isExpanded,
+        );
+      }).toList(),
+    );
+  }
 }
 
-class FallTile extends StatelessWidget {
+class FallTile {
   var angle, fall, lat, long, timst;
-  FallTile({this.angle, this.fall, this.lat, this.long, this.timst});
-  //final Documentsnap rank;
-  //int index;
-
-  //RankingTile({this.rank, this.index});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container();
-  }
+  bool isExpanded;
+  FallTile(
+      {this.angle,
+      this.fall,
+      this.lat,
+      this.long,
+      this.timst,
+      this.isExpanded});
 }
 
 /*
