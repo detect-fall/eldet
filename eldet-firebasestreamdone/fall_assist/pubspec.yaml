@@ -1,0 +1,29 @@
+name: fall_assist
+description: A new Flutter project.
+
+publish_to: 'none' 
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+
+  cupertino_icons: ^1.0.2
+  google_fonts:
+  firebase_core:
+  firebase_messaging:
+  firebase_database:
+  flutter_local_notifications:
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  
+
+flutter:
+
+  uses-material-design: true
