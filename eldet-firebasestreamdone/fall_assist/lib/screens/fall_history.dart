@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:maps_launcher/maps_launcher.dart';
 
 class FallHistory extends StatefulWidget {
   @override
@@ -16,6 +17,9 @@ class _FallHistoryState extends State<FallHistory> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.indigo,
+    ));
     SizeConfig().init(context);
     return SafeArea(
       child: Scaffold(
@@ -38,16 +42,13 @@ class _FallHistoryState extends State<FallHistory> {
             ),
           ),
         ),
-        body: SingleChildScrollView(
-          physics: ScrollPhysics(parent: BouncingScrollPhysics()),
-          child: Column(
-            children: <Widget>[
-              SizedBox(
-                height: SizeConfig.safeBlockVertical * 4.2,
-              ),
-              FallStream(dbRef: dbRef),
-            ],
-          ),
+        body: Column(
+          children: <Widget>[
+            SizedBox(
+              height: SizeConfig.safeBlockVertical * 3,
+            ),
+            FallStream(dbRef: dbRef),
+          ],
         ),
       ),
     );
@@ -62,7 +63,7 @@ class FallStream extends StatefulWidget {
 }
 
 class _FallStreamState extends State<FallStream> {
-  List<FallTile> data;
+  List<FallTile> data = [];
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<dynamic>(
@@ -85,15 +86,22 @@ class _FallStreamState extends State<FallStream> {
                     lat: entry.value["latitude"],
                     long: entry.value["longitude"],
                     timst: entry.value["timestamp"],
-                    isExpanded: true,
+                    day: entry.value["date"],
                   ))
               .toList();
 
           return snap.data.snapshot.value == null
               ? SizedBox()
-              : Container(
-                  //padding: EdgeInsets.only(top: 80),
-                  child: _buildPanel(),
+              : Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(SizeConfig.safeBlockVertical * 0.8),
+                    child: ListView(
+                      physics: ScrollPhysics(parent: BouncingScrollPhysics()),
+                      shrinkWrap: true,
+                      scrollDirection: Axis.vertical,
+                      children: data,
+                    ),
+                  ),
                 );
         } else {
           return Center(child: CircularProgressIndicator());
@@ -101,81 +109,44 @@ class _FallStreamState extends State<FallStream> {
       },
     );
   }
+}
 
-  Widget _buildPanel() {
-    return ExpansionPanelList(
-      expansionCallback: (int index, bool isExpanded) {
-        setState(() {
-          data[index].isExpanded = !isExpanded;
-        });
-      },
-      children: data.map<ExpansionPanel>((FallTile item) {
-        return ExpansionPanel(
-          headerBuilder: (BuildContext context, bool isExpanded) {
-            return ListTile(
-              title: Text("Fall" + " " + "Occured" + " " + "at " + item.timst),
-            );
-          },
-          body: ListTile(
-            title: Text(item.timst),
-          ),
-          isExpanded: item.isExpanded,
-        );
-      }).toList(),
+class FallTile extends StatelessWidget {
+  var angle, fall, lat, long, timst, day;
+
+  FallTile({this.angle, this.fall, this.lat, this.long, this.timst, this.day});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            ListTile(
+              //contentPadding: EdgeInsets.all(2),
+              leading: Icon(Icons.arrow_drop_down_circle),
+              title: const Text('Fall Detected'),
+              subtitle: Text(
+                'Date:  $day\nTime: $timst',
+                style: TextStyle(color: Colors.black.withOpacity(0.6)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: GestureDetector(
+                onDoubleTap: () {
+                    MapsLauncher.launchCoordinates(
+                    12, 77);
+                },
+                child: Text(
+                  'A fall was detected on $day, $timst hrs at latitude $lat, longitude $long. ',
+                  style: TextStyle(color: Colors.black.withOpacity(0.6)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
-
-class FallTile {
-  var angle, fall, lat, long, timst;
-  bool isExpanded;
-  FallTile(
-      {this.angle,
-      this.fall,
-      this.lat,
-      this.long,
-      this.timst,
-      this.isExpanded});
-}
-
-/*
-StreamBuilder(
-        stream: dbRef.onValue,
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(
-                backgroundColor: Colors.indigo,
-              ),
-            );
-          }
-          if (snap.hasError) {
-            // _showDialog("No internet!",
-            //     "Please check your internet connectivity.", context);
-          }
-          final falls = snap.data.snapshot.value;
-          List<FallTile> fallTiles = [];
-          //HashMap hm = new HashMap<int, Documentsnap>();
-          for (int i = 0; i < falls.length; i++) {
-            final rankingTile = FallTile(
-                angle: falls[i]["angle"].toString(),
-                fall: falls[i]["fall"].toString(),
-                lat: falls[i]["latitude"].toString(),
-                long: falls[i]["longitude"].toString(),
-                timst: falls[i]["timestamp"].toString());
-            fallTiles.add(rankingTile);
-          }
-          return Expanded(
-            child: Padding(
-              padding: EdgeInsets.all(SizeConfig.safeBlockVertical * 0.8),
-              child: ListView(
-                physics: ScrollPhysics(parent: BouncingScrollPhysics()),
-                shrinkWrap: true,
-                scrollDirection: Axis.horizontal,
-                children: fallTiles,
-              ),
-            ),
-          );
-        })
-
-*/

@@ -19,6 +19,7 @@ dependencies:
   firebase_messaging:
   firebase_database:
   flutter_local_notifications:
+  maps_launcher:
 dev_dependencies:
   flutter_test:
     sdk: flutter
